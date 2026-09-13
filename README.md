@@ -1,87 +1,82 @@
-## Clash Meta for Android
+# AngelaBox Clash
 
-A Graphical user interface of [Clash.Meta](https://github.com/MetaCubeX/Clash.Meta) for Android
+**AngelaBox Clash** 是基于 [mihomo](https://github.com/MetaCubeX/mihomo)（Clash Meta）内核的 Android 代理客户端。项目保持官方内核完整，并在其上提供模块化的链式出站与面向普通用户的操作界面。
 
-### Feature
+本项目与 MetaCubeX 及官方 Clash Meta for Android 无从属或授权关系，不得使用官方名称及标志进行商业发布或应用商店上架。
 
-Feature of [Clash.Meta](https://github.com/MetaCubeX/Clash.Meta)
+- 发行版：[Releases](https://github.com/dukangalex/ClashMetaForAndroid/releases)
+- 构建：[Actions](https://github.com/dukangalex/ClashMetaForAndroid/actions)
+- 使用说明：[docs/USER_GUIDE.md](docs/USER_GUIDE.md)
+- 维护说明：[docs/MAINTENANCE.md](docs/MAINTENANCE.md)
+- 姐妹产品（sing-box）：[dukangalex/AngelaBox](https://github.com/dukangalex/AngelaBox)
 
-[<img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png"
-     alt="Get it on F-Droid"
-     height="80">](https://f-droid.org/packages/com.github.metacubex.clash.meta/)
+## 项目标识
 
-### Requirement
+| 项目 | 值 |
+|------|-----|
+| 应用名称 | AngelaBox Clash |
+| 应用包名 | `io.chainbox.clash` |
+| 客户端仓库 | [dukangalex/ClashMetaForAndroid](https://github.com/dukangalex/ClashMetaForAndroid)（分支 `dev`） |
+| 内核仓库 | [dukangalex/mihomo-core](https://github.com/dukangalex/mihomo-core)（分支 `chain-dev`） |
+| 更新检查 | 仅本仓库 GitHub Releases |
+| 安装包 | `AngelaBox-Clash-*.apk` |
 
-- Android 5.0+ (minimum)
-- Android 7.0+ (recommend)
-- `armeabi-v7a` , `arm64-v8a`, `x86` or `x86_64` Architecture
+内部 Java/Kotlin 包名仍为 `com.github.kr328.clash`（上游遗留），不对外、不整包重命名，以便继续合并官方提交。
 
-### Build
+## 上游内核
 
-1. Update submodules
+| 项目 | 值 |
+|------|-----|
+| 官方上游 | [MetaCubeX/mihomo](https://github.com/MetaCubeX/mihomo) 分支 **Alpha**（Android 构建另参考 `android-real`） |
+| 本项目内核 | dukangalex/mihomo-core 分支 **chain-dev** |
+| 客户端版本 | 见 `version.properties` |
 
-   ```bash
-   git submodule update --init --recursive
-   ```
+`dukangalex/mihomo` 是另一个同名仓库（崩坏：星穹铁道 API 模型），不是本内核。请使用 `mihomo-core`。
 
-2. Install **OpenJDK 11**, **Android SDK**, **CMake** and **Golang**
+### 同步更新策略
 
-3. Create `local.properties` in project root with
+1. **跟随官方，不替换内核。** 在官方 mihomo 之上提供模块化链式出站与普通用户界面。
+2. **内核：** `git fetch` 官方 `MetaCubeX/mihomo`，merge 进 `chain-dev`，只解决与 Chain / `dialer-proxy` 覆盖层相关的冲突。
+3. **App：** `git fetch` 官方 `MetaCubeX/ClashMetaForAndroid`，merge 进本仓库 `dev`。冲突以 AngelaBox Clash 为准（包名、显示名、组链、更新检查、发版说明）。
+4. **Fail Closed：** 链路失败必须报错并停止启动，不得静默落到 DIRECT。
+5. **先验证再合入。** 官方新版本发布后，先把链式出站与运行时覆盖做稳，再合入更新的官方提交。
+6. **功能范围。** 本项目增加的能力只为降低日常操作成本，不改变官方配置模型。
 
-   ```properties
-   sdk.dir=/path/to/android-sdk
-   ```
+细节见 [docs/MAINTENANCE.md](docs/MAINTENANCE.md)。
 
-4. (Optional) Custom app package name. Add the following configuration to `local.properties`.
+## 架构
 
-   ```properties
-   # config your ownn applicationId, or it will be 'com.github.metacubex.clash'
-   custom.application.id=com.my.compile.clash
-   # remove application id suffix, or the applicaion id will be 'com.github.metacubex.clash.alpha'
-   remove.suffix=true
+官方 mihomo 内核保持完整。链式出站是 **模块化运行时覆盖层**：优先使用官方 `dialer-proxy`，只在导入/启动时改运行时配置，不改订阅文件，不替换内核。
 
-5. Create `signing.properties` in project root with
+```
+设备 → 入口节点 → 落地节点 → 目的站
+```
 
-   ```properties
-   keystore.path=/path/to/keystore/file
-   keystore.password=<key store password>
-   key.alias=<key alias>
-   key.password=<key password>
-   ```
+## 构建
 
-6. Build
+1. `git submodule update --init --recursive`
+2. 安装 OpenJDK 21、Android SDK、CMake、Golang
+3. 在项目根目录创建 `local.properties`（`sdk.dir=...`）与 `signing.properties`
+4. `./gradlew app:assembleMetaRelease`
 
-   ```bash
-   ./gradlew app:assembleAlphaRelease
-   ```
+产物文件名以 `AngelaBox-Clash-` 开头。
 
-### Automation
+可选 `local.properties`：
 
-APP package name is `com.github.metacubex.clash.meta`
+```properties
+custom.application.id=io.chainbox.clash
+remove.suffix=true
+```
 
-- Toggle Clash.Meta service status
-  - Send intent to activity `com.github.kr328.clash.ExternalControlActivity` with action `com.github.metacubex.clash.meta.action.TOGGLE_CLASH`
-- Start Clash.Meta service
-  - Send intent to activity `com.github.kr328.clash.ExternalControlActivity` with action `com.github.metacubex.clash.meta.action.START_CLASH`
-- Stop Clash.Meta service
-  - Send intent to activity `com.github.kr328.clash.ExternalControlActivity` with action `com.github.metacubex.clash.meta.action.STOP_CLASH`
-- Import a profile
-  - URL Scheme `clash://install-config?url=<encoded URI>` or `clashmeta://install-config?url=<encoded URI>`
+## 致谢
 
-### Contribution and Project Maintenance
+AngelaBox Clash 建立在上游开源工作之上：
 
-#### Meta Kernel
+- [mihomo](https://github.com/MetaCubeX/mihomo)，由 MetaCubeX 维护的 Clash Meta 内核
+- [Clash Meta for Android](https://github.com/MetaCubeX/ClashMetaForAndroid)，本客户端的上游界面与服务框架
 
-- CMFA uses the kernel from `android-real` branch under `MetaCubeX/Clash.Meta`, which is a merge of the main `Alpha` branch and `android-open`.
-  - If you want to contribute to the kernel, make PRs to `Alpha` branch of the Meta kernel repository.
-  - If you want to contribute Android-specific patches to the kernel, make PRs to  `android-open` branch of the Meta kernel repository.
+上述致谢不构成从属、授权或官方认可。
 
-#### Maintenance
+## 许可
 
-- When `MetaCubeX/Clash.Meta` kernel is updated to a new version, the `Update Dependencies` actions in this repo will be triggered automatically.
-  - It will pull the new version of the meta kernel, update all the golang dependencies, and create a PR without manual intervention.
-  - If there is any compile error in PR, you need to fix it before merging. Alternatively, you may merge the PR directly.
-- Manually triggering `Build Pre-Release` actions will compile and publish a `PreRelease` version.
-- Manually triggering `Build Release` actions will compile, tag and publish a `Release` version.
-  - You must fill the blank `Release Tag` with the tag you want to release in the format of `v1.2.3`.
-  - `versionName` and `versionCode` in `build.gradle.kts` will be automatically bumped to the tag you filled above.
+本仓库继承上游 [GPL-3.0](LICENSE)。上游代码版权归属原作者。AngelaBox Clash 为独立衍生工作，不代表上游项目。
